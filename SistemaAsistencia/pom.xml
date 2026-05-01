@@ -10,4 +10,19 @@
         <maven.compiler.release>25</maven.compiler.release>
         <exec.mainClass>com.utp.asistencia.SistemaAsistencia</exec.mainClass>
     </properties>
+    <dependencies>
+        <!-- Librería para conectar el Arduino por el puerto USB -->
+        <dependency>
+            <groupId>com.fazecast</groupId>
+            <artifactId>jSerialComm</artifactId>
+            <version>2.10.3</version>
+        </dependency>
+        
+        <!-- Librería para la base de datos SQLite -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.45.2.0</version>
+        </dependency>
+    </dependencies>
 </project>
