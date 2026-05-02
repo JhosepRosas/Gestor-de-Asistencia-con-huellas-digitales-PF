@@ -7,15 +7,15 @@
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <exec.mainClass>com.utp.asistencia.SistemaAsistencia</exec.mainClass>
     </properties>
     <dependencies>
-        <!-- Librería para conectar el Arduino por el puerto USB -->
+        <!-- Nueva librería JSSC para evitar bugs de arquitectura -->
         <dependency>
             <groupId>com.fazecast</groupId>
             <artifactId>jSerialComm</artifactId>
-            <version>2.10.3</version>
+            <version>2.10.4</version>
         </dependency>
         
         <!-- Librería para la base de datos SQLite -->

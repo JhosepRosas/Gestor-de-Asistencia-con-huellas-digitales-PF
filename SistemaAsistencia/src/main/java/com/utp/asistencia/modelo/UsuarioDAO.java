@@ -30,4 +30,23 @@ public class UsuarioDAO {
             return false; // retorna false si hubo un problema como un duplicado
         }
     }
+    
+    // Método para vincular el ID de la huella del Arduino con un alumno existente
+    public boolean asignarHuella(String dni, int huellaId) {
+        String sql = "UPDATE usuarios SET huella_id = ? WHERE dni = ?";
+        
+        try (Connection con = ConexionDB.conectar(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, huellaId);
+            ps.setString(2, dni);
+            
+            // executeUpdate() devuelve el número de filas afectadas. Si es > 0, se actualizó bien.
+            return ps.executeUpdate() > 0; 
+            
+        } catch (SQLException e) {
+            System.out.println("Error al asignar huella: " + e.getMessage());
+            return false;
+        }
+    }    
 }
