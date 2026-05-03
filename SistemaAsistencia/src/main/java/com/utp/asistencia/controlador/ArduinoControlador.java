@@ -21,9 +21,15 @@ public class ArduinoControlador {
         this.listener = listener;
         puertoSerial = SerialPort.getCommPort(puerto);
         puertoSerial.setBaudRate(9600);
-        puertoSerial.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
+        
+        // Configuramos los timeouts para que no se bloquee el programa si no hay datos
+        puertoSerial.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 100, 0);
 
         if (puertoSerial.openPort()) {
+            // Reset de Arduino (DTR) - Crucial para clones chinos
+            puertoSerial.setDTR();
+            try { Thread.sleep(2000); } catch (InterruptedException e) {} // Esperar reinicio
+            
             puertoSerial.addDataListener(new SerialPortDataListener() {
                 @Override
                 public int getListeningEvents() {

@@ -9,6 +9,8 @@ public class Usuario {
     private String nombres;
     private String apellidos;
     private String dni;
+    private String username;
+    private String password;
     private String rol;
     private int huella_id;
     
@@ -16,11 +18,13 @@ public class Usuario {
     public Usuario() {
     }
     
-    // constructor sin ID (pa registrar nuevos usuarios, el ID ya lo pone sqlite)
-    public Usuario(String nombres, String apellidos, String dni, String rol, int huella_id) {
+    // constructor completo
+    public Usuario(String nombres, String apellidos, String dni, String username, String password, String rol, int huella_id) {
         this.nombres = nombres;
         this.apellidos = apellidos;
         this.dni = dni;
+        this.username = username;
+        this.password = password;
         this.rol = rol;
         this.huella_id = huella_id;
     }
@@ -37,6 +41,12 @@ public class Usuario {
 
     public String getDni() { return dni; }
     public void setDni(String dni) { this.dni = dni; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }

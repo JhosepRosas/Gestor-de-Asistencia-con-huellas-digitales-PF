@@ -15,11 +15,23 @@ public class FrmEnrolamiento extends JFrame {
     private UsuarioDAO dao;
     private int idGenerado;
 
+    private String dniPredefinido;
+
     public FrmEnrolamiento() {
+        this(null);
+    }
+
+    public FrmEnrolamiento(String dni) {
+        this.dniPredefinido = dni;
         arduino = new ArduinoControlador();
         dao = new UsuarioDAO();
         configurarVentana();
         inicializarComponentes();
+        
+        if (dniPredefinido != null) {
+            txtDni.setText(dniPredefinido);
+            txtDni.setEditable(false);
+        }
     }
 
     private void configurarVentana() {
