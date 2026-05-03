@@ -132,12 +132,11 @@ public class FrmAsistencia extends JFrame {
             log("Huella no reconocida por el sistema.");
             reiniciarLectura(1500);
         } else if (msg.equals("SCANNING")) {
-            lblMensaje.setText("ESPERANDO HUELLA...");
-            lblMensaje.setForeground(new Color(0, 102, 204));
+            // No hacemos nada visualmente aquí para evitar parpadeos, 
+            // solo sabemos que el sensor ya está escuchando.
         } else if (msg.startsWith("ERR_")) {
-            lblMensaje.setText("ERROR AL LEER");
-            lblMensaje.setForeground(Color.RED);
-            reiniciarLectura(1000);
+            // Los errores internos de lectura los ignoramos en la UI
+            // para que el usuario simplemente reintente sin ver mensajes de error técnicos.
         }
     }
 

@@ -83,36 +83,44 @@ void enrollFingerprint() {
 
 void verifyFingerprint() {
   Serial.println("SCANNING");
-  int p = -1;
   
-  // Bucle de espera infinita hasta detectar un dedo o recibir comando de parada
   while (true) {
-    p = finger.getImage();
-    if (p == FINGERPRINT_OK) break;
+    int p = finger.getImage();
     
-    // Si hay un comando entrante, abortamos para atenderlo (ej: detener verificación)
-    if (Serial.available()) {
-      return; 
+    // Si no hay dedo, simplemente seguimos esperando en el bucle
+    if (p == FINGERPRINT_NOFINGER) {
+      if (Serial.available()) return; // Abortar si llega un nuevo comando
+      delay(100);
+      continue;
+    }
+
+    // Si hay un dedo, intentamos procesarlo
+    if (p == FINGERPRINT_OK) {
+      p = finger.image2Tz();
+      if (p != FINGERPRINT_OK) {
+        // Si la imagen fue mala, no enviamos error a Java, 
+        // simplemente esperamos a que el usuario acomode mejor el dedo
+        continue; 
+      }
+
+      p = finger.fingerFastSearch();
+      if (p == FINGERPRINT_OK) {
+        Serial.print("FOUND:");
+        Serial.print(finger.fingerID);
+        Serial.print(",");
+        Serial.println(finger.confidence);
+        
+        // Esperar a que quite el dedo para no spamear la misma lectura
+        while (finger.getImage() != FINGERPRINT_NOFINGER) { delay(100); }
+        return; // Salir y esperar nueva orden 'V' de Java
+      } else if (p == FINGERPRINT_NOTFOUND) {
+        Serial.println("NOT_FOUND");
+        
+        // Esperar a que quite el dedo
+        while (finger.getImage() != FINGERPRINT_NOFINGER) { delay(100); }
+        return; // Salir y esperar nueva orden 'V' de Java
+      }
     }
     delay(100);
-  }
-
-  // Una vez capturada la imagen, procesamos
-  p = finger.image2Tz();
-  if (p != FINGERPRINT_OK) {
-    Serial.println("ERR_CONV");
-    return;
-  }
-
-  p = finger.fingerFastSearch();
-  if (p == FINGERPRINT_OK) {
-    Serial.print("FOUND:");
-    Serial.print(finger.fingerID);
-    Serial.print(",");
-    Serial.println(finger.confidence);
-  } else if (p == FINGERPRINT_NOTFOUND) {
-    Serial.println("NOT_FOUND");
-  } else {
-    Serial.println("ERR_SEARCH");
   }
 }
