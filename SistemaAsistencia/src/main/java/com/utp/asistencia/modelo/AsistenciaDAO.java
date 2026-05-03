@@ -9,6 +9,31 @@ import java.util.List;
 
 public class AsistenciaDAO {
     
+    public String[] obtenerCursoActual() {
+        String[] curso = null;
+        String sql = "SELECT c.id, c.nombre FROM cursos c " +
+                     "JOIN horarios h ON c.id = h.curso_id " +
+                     "WHERE h.dia = ? AND ? BETWEEN h.hora_inicio AND h.hora_fin";
+        
+        String[] diasES = {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        String diaActual = diasES[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1];
+        String horaActual = new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date());
+
+        try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, diaActual);
+            ps.setString(2, horaActual);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                curso = new String[]{String.valueOf(rs.getInt("id")), rs.getString("nombre")};
+            }
+        } catch (SQLException e) {
+            System.out.println("Error obtener curso actual: " + e.getMessage());
+        }
+        return curso;
+    }
+
     public boolean registrarAsistencia(int huellaId, int cursoId) {
         String sqlUsuario = "SELECT id FROM usuarios WHERE huella_id = ?";
         String sqlAsistencia = "INSERT INTO asistencias (usuario_id, curso_id) VALUES (?, ?)";

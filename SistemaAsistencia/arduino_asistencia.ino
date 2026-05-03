@@ -84,23 +84,20 @@ void enrollFingerprint() {
 void verifyFingerprint() {
   Serial.println("SCANNING");
   int p = -1;
-  // Non-blocking scan for attendance
-  long startTime = millis();
-  while (millis() - startTime < 5000) { // 5 second timeout for scan
+  
+  // Bucle de espera infinita hasta detectar un dedo o recibir comando de parada
+  while (true) {
     p = finger.getImage();
     if (p == FINGERPRINT_OK) break;
-    if (Serial.available() && Serial.peek() == 'S') { // Stop command
-      Serial.read();
-      Serial.println("STOPPED");
-      return;
+    
+    // Si hay un comando entrante, abortamos para atenderlo (ej: detener verificación)
+    if (Serial.available()) {
+      return; 
     }
+    delay(100);
   }
 
-  if (p != FINGERPRINT_OK) {
-    Serial.println("TIMEOUT");
-    return;
-  }
-
+  // Una vez capturada la imagen, procesamos
   p = finger.image2Tz();
   if (p != FINGERPRINT_OK) {
     Serial.println("ERR_CONV");
@@ -113,7 +110,9 @@ void verifyFingerprint() {
     Serial.print(finger.fingerID);
     Serial.print(",");
     Serial.println(finger.confidence);
-  } else {
+  } else if (p == FINGERPRINT_NOTFOUND) {
     Serial.println("NOT_FOUND");
+  } else {
+    Serial.println("ERR_SEARCH");
   }
 }

@@ -86,6 +86,26 @@ public class ConexionDB {
             }
             
             System.out.println("Base de datos estructurada correctamente.");
+            
+            // Insertar datos de prueba si no hay cursos
+            String sqlCountCursos = "SELECT COUNT(*) FROM cursos";
+            ResultSet rsC = stmt.executeQuery(sqlCountCursos);
+            if (rsC.next() && rsC.getInt(1) == 0) {
+                // Curso permanente solicitado por el usuario
+                stmt.execute("INSERT INTO cursos (nombre, codigo) VALUES ('Integrador I', 'INT01')");
+                String[] dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+                for (String dia : dias) {
+                    stmt.execute("INSERT INTO horarios (curso_id, dia, hora_inicio, hora_fin) VALUES (1, '" + dia + "', '00:00', '23:59')");
+                }
+                
+                // Otros cursos adicionales
+                String[] nombresCursos = {"Matemática I", "Programación II", "Física III", "Algoritmos", "Base de Datos"};
+                String[] codigos = {"MAT01", "PROG02", "FIS03", "ALG04", "BD05"};
+                for (int i = 0; i < 5; i++) {
+                    stmt.execute("INSERT INTO cursos (nombre, codigo) VALUES ('" + nombresCursos[i] + "', '" + codigos[i] + "')");
+                }
+                System.out.println("Cursos y horarios de prueba actualizados con Integrador I permanente.");
+            }
         } catch (SQLException e) {
             System.out.println("Error al estructurar BD: " + e.getMessage());
         }

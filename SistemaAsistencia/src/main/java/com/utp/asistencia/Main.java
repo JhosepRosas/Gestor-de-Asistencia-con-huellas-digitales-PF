@@ -1,8 +1,9 @@
 package com.utp.asistencia;
 
-import com.utp.asistencia.modelo.ConexionDB;
-import com.utp.asistencia.vista.FrmLogin;
 import javax.swing.UIManager;
+
+import com.utp.asistencia.modelo.ConexionDB;
+import com.utp.asistencia.vista.FrmAsistencia;
 
 public class Main {
     public static void main(String[] args) {
@@ -16,9 +17,9 @@ public class Main {
             e.printStackTrace();
         }
         
-        // 3. Iniciar con Login
+        // 3. Iniciar directamente en la ventana de Asistencia
         java.awt.EventQueue.invokeLater(() -> {
-            new FrmLogin().setVisible(true);
+            new FrmAsistencia().setVisible(true);
         });
     }
 }

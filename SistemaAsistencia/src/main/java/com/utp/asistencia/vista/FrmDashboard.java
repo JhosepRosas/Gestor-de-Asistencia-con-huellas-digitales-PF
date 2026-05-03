@@ -74,7 +74,7 @@ public class FrmDashboard extends JFrame {
         });
 
         btnLogout.addActionListener(e -> {
-            new FrmLogin().setVisible(true);
+            new FrmAsistencia().setVisible(true);
             this.dispose();
         });
         

@@ -1,36 +1,21 @@
 package com.utp.asistencia.vista;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
-import javax.swing.Timer;
-
 import com.utp.asistencia.controlador.ArduinoControlador;
 import com.utp.asistencia.modelo.AsistenciaDAO;
+import javax.swing.*;
+import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class FrmAsistencia extends JFrame {
 
     private JLabel lblReloj;
+    private JLabel lblCursoActual;
     private JLabel lblMensaje;
     private JTextArea txtLog;
-    private JComboBox<String> cbCursos;
-    private List<String[]> listaCursos;
     private ArduinoControlador arduino;
     private AsistenciaDAO dao;
+    private String[] cursoInfo;
     private final String PUERTO = "COM3";
 
     public FrmAsistencia() {
@@ -38,61 +23,61 @@ public class FrmAsistencia extends JFrame {
         dao = new AsistenciaDAO();
         configurarVentana();
         inicializarComponentes();
-        cargarCursos();
         conectarArduino();
-        iniciarReloj();
+        iniciarRelojYCurso();
     }
 
     private void configurarVentana() {
-        setTitle("Control de Asistencia - UTP");
-        setSize(550, 500);
+        setTitle("Sistema de Asistencia Biométrico - UTP");
+        setSize(600, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(15, 15));
+        getContentPane().setBackground(new Color(255, 255, 255));
     }
 
     private void inicializarComponentes() {
+        // Panel Superior: Reloj y Curso
         JPanel panelNorte = new JPanel(new GridLayout(3, 1));
-        lblReloj = new JLabel("00:00:00", SwingConstants.CENTER);
-        lblReloj.setFont(new Font("Arial", Font.BOLD, 30));
+        panelNorte.setOpaque(false);
         
-        cbCursos = new JComboBox<>();
-        JPanel panelCurso = new JPanel(new FlowLayout());
-        panelCurso.add(new JLabel("Curso:"));
-        panelCurso.add(cbCursos);
+        lblReloj = new JLabel("00:00:00", SwingConstants.CENTER);
+        lblReloj.setFont(new Font("Arial", Font.BOLD, 48));
+        lblReloj.setForeground(new Color(0, 51, 102));
+
+        lblCursoActual = new JLabel("Buscando curso...", SwingConstants.CENTER);
+        lblCursoActual.setFont(new Font("Arial", Font.ITALIC, 20));
+        lblCursoActual.setForeground(new Color(102, 102, 102));
 
         lblMensaje = new JLabel("Pase su huella por el sensor", SwingConstants.CENTER);
-        lblMensaje.setFont(new Font("Arial", Font.PLAIN, 18));
-        lblMensaje.setForeground(Color.BLUE);
+        lblMensaje.setFont(new Font("Arial", Font.BOLD, 18));
+        lblMensaje.setForeground(new Color(0, 102, 204));
 
         panelNorte.add(lblReloj);
-        panelNorte.add(panelCurso);
+        panelNorte.add(lblCursoActual);
         panelNorte.add(lblMensaje);
         add(panelNorte, BorderLayout.NORTH);
 
+        // Centro: Log de eventos
         txtLog = new JTextArea();
         txtLog.setEditable(false);
+        txtLog.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        txtLog.setBackground(new Color(245, 245, 245));
         add(new JScrollPane(txtLog), BorderLayout.CENTER);
 
-        JButton btnVolver = new JButton("Volver al Menú");
-        btnVolver.addActionListener(e -> {
+        // Panel Inferior: Botón Login
+        JPanel panelSur = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelSur.setOpaque(false);
+        JButton btnLogin = new JButton("Acceso Personal");
+        btnLogin.setBackground(new Color(0, 51, 102));
+        btnLogin.setForeground(Color.WHITE);
+        btnLogin.addActionListener(e -> {
             arduino.desconectar();
+            new FrmLogin().setVisible(true);
             this.dispose();
-            // Aquí idealmente volveríamos al Dashboard, pero para simplificar solo cerramos
         });
-        add(btnVolver, BorderLayout.SOUTH);
-    }
-
-    private void cargarCursos() {
-        listaCursos = dao.listarCursos();
-        cbCursos.removeAllItems();
-        if (listaCursos.isEmpty()) {
-            cbCursos.addItem("Sin cursos disponibles");
-        } else {
-            for (String[] c : listaCursos) {
-                cbCursos.addItem(c[1]);
-            }
-        }
+        panelSur.add(btnLogin);
+        add(panelSur, BorderLayout.SOUTH);
     }
 
     private void conectarArduino() {
@@ -104,16 +89,19 @@ public class FrmAsistencia extends JFrame {
 
             @Override
             public void onConnectionLost() {
-                lblMensaje.setText("¡ERROR: Arduino desconectado!");
-                lblMensaje.setForeground(Color.RED);
+                SwingUtilities.invokeLater(() -> {
+                    lblMensaje.setText("¡ERROR: SENSOR DESCONECTADO!");
+                    lblMensaje.setForeground(Color.RED);
+                });
             }
         });
 
         if (ok) {
-            log("Conectado a " + PUERTO);
+            log("Sensor inicializado en " + PUERTO);
             arduino.enviarComando("V"); // Iniciar modo verificación
         } else {
-            log("Error al conectar con " + PUERTO);
+            log("No se pudo conectar con el sensor en " + PUERTO);
+            lblMensaje.setText("ERROR DE CONEXIÓN");
         }
     }
 
@@ -123,41 +111,69 @@ public class FrmAsistencia extends JFrame {
             int id = Integer.parseInt(parts[0]);
             String nombre = dao.obtenerNombrePorHuella(id);
             
-            int cursoIdx = cbCursos.getSelectedIndex();
-            int cursoId = (listaCursos.isEmpty() || cursoIdx < 0) ? 0 : Integer.parseInt(listaCursos.get(cursoIdx)[0]);
-
-            if (dao.registrarAsistencia(id, cursoId)) {
-                lblMensaje.setText("¡Bienvenido " + nombre + "!");
-                lblMensaje.setForeground(new Color(0, 150, 0));
-                log("Asistencia registrada: " + nombre + " en " + cbCursos.getSelectedItem());
+            if (cursoInfo != null) {
+                int cursoId = Integer.parseInt(cursoInfo[0]);
+                if (dao.registrarAsistencia(id, cursoId)) {
+                    lblMensaje.setText("¡HOLA " + nombre.toUpperCase() + "!");
+                    lblMensaje.setForeground(new Color(0, 150, 0));
+                    log("Asistencia: " + nombre + " -> " + cursoInfo[1]);
+                }
+            } else {
+                lblMensaje.setText("SIN CURSO PROGRAMADO");
+                lblMensaje.setForeground(Color.ORANGE);
+                log("Intento de asistencia de " + nombre + " sin curso actual.");
             }
             
-            new Thread(() -> {
-                try { Thread.sleep(2000); } catch (Exception e) {}
-                if (arduino.estaConectado()) {
-                    arduino.enviarComando("V");
-                    lblMensaje.setText("Pase su huella por el sensor");
-                    lblMensaje.setForeground(Color.BLUE);
-                }
-            }).start();
+            reiniciarLectura(2500);
             
         } else if (msg.equals("NOT_FOUND")) {
-            lblMensaje.setText("Huella no reconocida");
+            lblMensaje.setText("USUARIO DESCONOCIDO");
             lblMensaje.setForeground(Color.RED);
-            arduino.enviarComando("V");
+            log("Huella no reconocida por el sistema.");
+            reiniciarLectura(1500);
         } else if (msg.equals("SCANNING")) {
-            lblMensaje.setText("Escaneando...");
+            lblMensaje.setText("ESPERANDO HUELLA...");
+            lblMensaje.setForeground(new Color(0, 102, 204));
+        } else if (msg.startsWith("ERR_")) {
+            lblMensaje.setText("ERROR AL LEER");
+            lblMensaje.setForeground(Color.RED);
+            reiniciarLectura(1000);
         }
     }
 
-    private void iniciarReloj() {
+    private void reiniciarLectura(int ms) {
+        new Thread(() -> {
+            try { Thread.sleep(ms); } catch (Exception e) {}
+            if (arduino != null && arduino.estaConectado()) {
+                arduino.enviarComando("V");
+                SwingUtilities.invokeLater(() -> {
+                    lblMensaje.setText("Pase su huella por el sensor");
+                    lblMensaje.setForeground(new Color(0, 102, 204));
+                });
+            }
+        }).start();
+    }
+
+    private void iniciarRelojYCurso() {
         Timer timer = new Timer(1000, e -> {
-            lblReloj.setText(new SimpleDateFormat("HH:mm:ss").format(new Date()));
+            Date ahora = new Date();
+            lblReloj.setText(new SimpleDateFormat("HH:mm:ss").format(ahora));
+            
+            // Actualizar curso cada minuto o al inicio
+            cursoInfo = dao.obtenerCursoActual();
+            if (cursoInfo != null) {
+                lblCursoActual.setText("Curso Actual: " + cursoInfo[1]);
+                lblCursoActual.setForeground(new Color(0, 102, 0));
+            } else {
+                lblCursoActual.setText("No hay cursos en este horario");
+                lblCursoActual.setForeground(Color.GRAY);
+            }
         });
         timer.start();
     }
 
     private void log(String s) {
         txtLog.append("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] " + s + "\n");
+        txtLog.setCaretPosition(txtLog.getDocument().getLength());
     }
 }
