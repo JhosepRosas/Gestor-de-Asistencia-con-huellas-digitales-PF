@@ -29,48 +29,48 @@ public class FrmAsistencia extends JFrame {
 
     private void configurarVentana() {
         setTitle("Sistema de Asistencia Biométrico - UTP");
-        setSize(600, 500);
+        setSize(700, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(15, 15));
-        getContentPane().setBackground(new Color(255, 255, 255));
+        setLayout(new BorderLayout(20, 20));
     }
 
     private void inicializarComponentes() {
-        // Panel Superior: Reloj y Curso
-        JPanel panelNorte = new JPanel(new GridLayout(3, 1));
-        panelNorte.setOpaque(false);
+        JPanel panelNorte = new JPanel();
+        panelNorte.setLayout(new BoxLayout(panelNorte, BoxLayout.Y_AXIS));
+        panelNorte.setBorder(BorderFactory.createEmptyBorder(25, 30, 25, 30));
         
         lblReloj = new JLabel("00:00:00", SwingConstants.CENTER);
-        lblReloj.setFont(new Font("Arial", Font.BOLD, 48));
-        lblReloj.setForeground(new Color(0, 51, 102));
+        lblReloj.setFont(new Font("Segoe UI", Font.BOLD, 56));
+        lblReloj.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         lblCursoActual = new JLabel("Buscando curso...", SwingConstants.CENTER);
-        lblCursoActual.setFont(new Font("Arial", Font.ITALIC, 20));
-        lblCursoActual.setForeground(new Color(102, 102, 102));
+        lblCursoActual.setFont(new Font("Segoe UI", Font.ITALIC, 18));
+        lblCursoActual.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         lblMensaje = new JLabel("Pase su huella por el sensor", SwingConstants.CENTER);
-        lblMensaje.setFont(new Font("Arial", Font.BOLD, 18));
-        lblMensaje.setForeground(new Color(0, 102, 204));
+        lblMensaje.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblMensaje.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         panelNorte.add(lblReloj);
+        panelNorte.add(Box.createRigidArea(new Dimension(0, 10)));
         panelNorte.add(lblCursoActual);
+        panelNorte.add(Box.createRigidArea(new Dimension(0, 15)));
         panelNorte.add(lblMensaje);
         add(panelNorte, BorderLayout.NORTH);
 
-        // Centro: Log de eventos
         txtLog = new JTextArea();
         txtLog.setEditable(false);
-        txtLog.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        txtLog.setBackground(new Color(245, 245, 245));
-        add(new JScrollPane(txtLog), BorderLayout.CENTER);
+        txtLog.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        JScrollPane scrollPane = new JScrollPane(txtLog);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+        add(scrollPane, BorderLayout.CENTER);
 
-        // Panel Inferior: Botón Login
         JPanel panelSur = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelSur.setOpaque(false);
+        panelSur.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
         JButton btnLogin = new JButton("Acceso Personal");
-        btnLogin.setBackground(new Color(0, 51, 102));
-        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnLogin.addActionListener(e -> {
             arduino.desconectar();
             new FrmLogin().setVisible(true);
@@ -91,14 +91,14 @@ public class FrmAsistencia extends JFrame {
             public void onConnectionLost() {
                 SwingUtilities.invokeLater(() -> {
                     lblMensaje.setText("¡ERROR: SENSOR DESCONECTADO!");
-                    lblMensaje.setForeground(Color.RED);
+                    lblMensaje.setForeground(new Color(255, 100, 100));
                 });
             }
         });
 
         if (ok) {
             log("Sensor inicializado en " + PUERTO);
-            arduino.enviarComando("V"); // Iniciar modo verificación
+            arduino.enviarComando("V");
         } else {
             log("No se pudo conectar con el sensor en " + PUERTO);
             lblMensaje.setText("ERROR DE CONEXIÓN");
@@ -115,12 +115,16 @@ public class FrmAsistencia extends JFrame {
                 int cursoId = Integer.parseInt(cursoInfo[0]);
                 if (dao.registrarAsistencia(id, cursoId)) {
                     lblMensaje.setText("¡HOLA " + nombre.toUpperCase() + "!");
-                    lblMensaje.setForeground(new Color(0, 150, 0));
-                    log("Asistencia: " + nombre + " -> " + cursoInfo[1]);
+                    lblMensaje.setForeground(new Color(100, 255, 100));
+                    log("Asistencia: " + nombre + " -> " + cursoInfo[1] + " a las " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                } else {
+                    lblMensaje.setText(nombre.toUpperCase() + " YA MARCÓ ASISTENCIA");
+                    lblMensaje.setForeground(new Color(255, 200, 100));
+                    log("Asistencia duplicada: " + nombre + " ya tiene asistencia hoy en " + cursoInfo[1]);
                 }
             } else {
                 lblMensaje.setText("SIN CURSO PROGRAMADO");
-                lblMensaje.setForeground(Color.ORANGE);
+                lblMensaje.setForeground(new Color(255, 200, 100));
                 log("Intento de asistencia de " + nombre + " sin curso actual.");
             }
             
@@ -128,15 +132,9 @@ public class FrmAsistencia extends JFrame {
             
         } else if (msg.equals("NOT_FOUND")) {
             lblMensaje.setText("USUARIO DESCONOCIDO");
-            lblMensaje.setForeground(Color.RED);
+            lblMensaje.setForeground(new Color(255, 100, 100));
             log("Huella no reconocida por el sistema.");
             reiniciarLectura(1500);
-        } else if (msg.equals("SCANNING")) {
-            // No hacemos nada visualmente aquí para evitar parpadeos, 
-            // solo sabemos que el sensor ya está escuchando.
-        } else if (msg.startsWith("ERR_")) {
-            // Los errores internos de lectura los ignoramos en la UI
-            // para que el usuario simplemente reintente sin ver mensajes de error técnicos.
         }
     }
 
@@ -147,7 +145,7 @@ public class FrmAsistencia extends JFrame {
                 arduino.enviarComando("V");
                 SwingUtilities.invokeLater(() -> {
                     lblMensaje.setText("Pase su huella por el sensor");
-                    lblMensaje.setForeground(new Color(0, 102, 204));
+                    lblMensaje.setForeground(new Color(150, 200, 255));
                 });
             }
         }).start();
@@ -158,14 +156,13 @@ public class FrmAsistencia extends JFrame {
             Date ahora = new Date();
             lblReloj.setText(new SimpleDateFormat("HH:mm:ss").format(ahora));
             
-            // Actualizar curso cada minuto o al inicio
             cursoInfo = dao.obtenerCursoActual();
             if (cursoInfo != null) {
                 lblCursoActual.setText("Curso Actual: " + cursoInfo[1]);
-                lblCursoActual.setForeground(new Color(0, 102, 0));
+                lblCursoActual.setForeground(new Color(150, 255, 150));
             } else {
                 lblCursoActual.setText("No hay cursos en este horario");
-                lblCursoActual.setForeground(Color.GRAY);
+                lblCursoActual.setForeground(new Color(150, 150, 150));
             }
         });
         timer.start();

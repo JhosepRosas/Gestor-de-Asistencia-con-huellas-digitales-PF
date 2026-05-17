@@ -12,6 +12,7 @@ public class FrmGestionAlumnos extends JFrame {
     private DefaultTableModel modeloTabla;
     private UsuarioDAO dao;
     private JButton btnRefrescar, btnEnrolar, btnVolver, btnNuevo;
+    private JLabel lblTitulo;
 
     public FrmGestionAlumnos() {
         dao = new UsuarioDAO();
@@ -22,28 +23,42 @@ public class FrmGestionAlumnos extends JFrame {
 
     private void configurarVentana() {
         setTitle("Gestión de Alumnos - UTP");
-        setSize(800, 500);
+        setSize(900, 550);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
     }
 
     private void inicializarComponentes() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(15, 15));
         
-        // Tabla
+        JPanel panelNorte = new JPanel();
+        panelNorte.setLayout(new BorderLayout());
+        panelNorte.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+        
+        lblTitulo = new JLabel("Gestión de Alumnos");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        panelNorte.add(lblTitulo, BorderLayout.WEST);
+        
+        add(panelNorte, BorderLayout.NORTH);
+        
         modeloTabla = new DefaultTableModel(new Object[]{"ID", "Nombres", "Apellidos", "DNI", "Huella ID"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tablaAlumnos = new JTable(modeloTabla);
-        add(new JScrollPane(tablaAlumnos), BorderLayout.CENTER);
+        tablaAlumnos.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaAlumnos.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        tablaAlumnos.setRowHeight(25);
+        JScrollPane scrollPane = new JScrollPane(tablaAlumnos);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+        add(scrollPane, BorderLayout.CENTER);
 
-        // Botones
         JPanel panelBotones = new JPanel();
-        btnNuevo = new JButton("Nuevo Alumno");
-        btnRefrescar = new JButton("Refrescar");
-        btnEnrolar = new JButton("Enrolar Huella");
-        btnVolver = new JButton("Volver");
+        panelBotones.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        btnNuevo = crearBoton("Nuevo Alumno");
+        btnRefrescar = crearBoton("Refrescar");
+        btnEnrolar = crearBoton("Enrolar Huella");
+        btnVolver = crearBoton("Volver");
 
         panelBotones.add(btnNuevo);
         panelBotones.add(btnRefrescar);
@@ -51,20 +66,25 @@ public class FrmGestionAlumnos extends JFrame {
         panelBotones.add(btnVolver);
         add(panelBotones, BorderLayout.SOUTH);
 
-        // Eventos
         btnNuevo.addActionListener(e -> mostrarFormularioRegistro());
         btnRefrescar.addActionListener(e -> cargarDatos());
         btnEnrolar.addActionListener(e -> {
             int fila = tablaAlumnos.getSelectedRow();
             if (fila >= 0) {
                 String dni = modeloTabla.getValueAt(fila, 3).toString();
-                // Abrir enrolamiento para el DNI seleccionado
                 new FrmEnrolamiento(dni).setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(this, "Seleccione un alumno de la lista para enrolar su huella.");
+                JOptionPane.showMessageDialog(this, "Seleccione un alumno de la lista para enrolar su huella.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
         btnVolver.addActionListener(e -> this.dispose());
+    }
+
+    private JButton crearBoton(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     private void mostrarFormularioRegistro() {
@@ -86,13 +106,13 @@ public class FrmGestionAlumnos extends JFrame {
             if (!nom.isEmpty() && !ape.isEmpty() && !dni.isEmpty()) {
                 Usuario nuevo = new Usuario(nom, ape, dni, dni, "123", "ALUMNO", 0);
                 if (dao.registrar(nuevo)) {
-                    JOptionPane.showMessageDialog(this, "Alumno registrado. Ahora selecciónelo en la lista y pulse 'Enrolar Huella'.");
+                    JOptionPane.showMessageDialog(this, "Alumno registrado. Ahora selecciónelo en la lista y pulse 'Enrolar Huella'.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                     cargarDatos();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Error al registrar. El DNI/Código ya podría existir.");
+                    JOptionPane.showMessageDialog(this, "Error al registrar. El DNI/Código ya podría existir.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.");
+                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         }
     }
